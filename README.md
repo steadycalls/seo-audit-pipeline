@@ -94,9 +94,23 @@ You can also run the scripts manually for testing:
     ./scripts/run_backup.ps1
     ```
 
-## Reporting
+## Dashboard and Reporting
 
-You can connect a business intelligence tool like Power BI, Tableau, or Metabase to the PostgreSQL database to create dashboards and reports. Use the queries in `sql/03_sample_queries.sql` as a starting point.
+### Quick Start with Metabase (Recommended)
+
+We've included a complete Metabase setup for instant dashboard creation:
+
+1. Navigate to the `metabase` directory
+2. Run `./setup_metabase.ps1` (or double-click `metabase.bat`)
+3. Open http://localhost:3000 in your browser
+4. Follow the setup wizard to connect to your PostgreSQL database
+5. Use the pre-built queries in `metabase/METABASE_QUERIES.md` to create dashboards
+
+See `docs/METABASE_SETUP.md` for detailed instructions.
+
+### Alternative BI Tools
+
+You can also connect other business intelligence tools like Power BI or Tableau to the PostgreSQL database. Use the queries in `sql/03_sample_queries.sql` as a starting point.
 
 ## License
 
