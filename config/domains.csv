@@ -1,0 +1,5 @@
+domain,label,status
+example.com,Example Site,active
+testsite.com,Test Site,active
+demo.org,Demo Organization,active
+sample.net,Sample Network,inactive

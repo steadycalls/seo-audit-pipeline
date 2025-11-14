@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and data
+logs/*
+!logs/.gitkeep
+exports/*
+!exports/.gitkeep
+exports_archive/*
+!exports_archive/.gitkeep
+db_backups/*
+!db_backups/.gitkeep
+
+# OS-specific
+.DS_Store
+Thumbs.db

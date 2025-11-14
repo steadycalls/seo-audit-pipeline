@@ -1,0 +1,16 @@
+{
+  "screaming_frog_cli_path": "C:\\Program Files\\Screaming Frog SEO Spider\\screamingfrogseospidercli.exe",
+  "screaming_frog_config_path": "C:\\sf_batch\\config\\rankdre_default.seospider",
+  "domains_csv_path": "C:\\sf_batch\\domains.csv",
+  "base_export_path": "C:\\sf_batch\\exports",
+  "db_backup_path": "C:\\sf_batch\\db_backups",
+  "log_file_path": "C:\\sf_batch\\logs\\pipeline.log",
+  "max_parallel_crawls": 3,
+  "s3_bucket_name": "rankdre-sf-audits",
+  "db_credential_name": "Postgres_ETL_User",
+  "aws_credential_profile": "s3_backup_user",
+  "postgres_host": "localhost",
+  "postgres_port": 5432,
+  "postgres_database": "seo_audits",
+  "archive_processed_files": true
+}
