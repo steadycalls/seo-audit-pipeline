@@ -15,7 +15,8 @@ param(
     [switch]$SkipPrerequisites,
     [switch]$SkipDatabase,
     [switch]$SkipCredentials,
-    [switch]$SkipScheduledTasks
+    [switch]$SkipScheduledTasks,
+    [switch]$SkipMetabase
 )
 
 # Check if running as Administrator
@@ -207,6 +208,35 @@ function Install-PostgreSQL {
             return $true
         }
     }
+}
+
+function Install-Docker {
+    Write-SetupLog "Checking for Docker..."
+    
+    if (Get-Command docker -ErrorAction SilentlyContinue) {
+        Write-SetupLog "Docker is already installed" "SUCCESS"
+        return $true
+    }
+    
+    Write-SetupLog "Docker not found" "WARNING"
+    Write-Host ""
+    Write-Host "Docker is required to run Metabase dashboard." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Installation options:" -ForegroundColor Cyan
+    Write-Host "  1. Install Docker Desktop (recommended):" -ForegroundColor White
+    Write-Host "     https://www.docker.com/products/docker-desktop" -ForegroundColor Gray
+    Write-Host ""
+    
+    $install = Read-Host "Would you like to open the Docker Desktop download page? (Y/N)"
+    
+    if ($install -eq "Y" -or $install -eq "y") {
+        Start-Process "https://www.docker.com/products/docker-desktop"
+        Write-Host ""
+        Write-Host "Please install Docker Desktop and restart this setup script." -ForegroundColor Yellow
+        Write-Host ""
+    }
+    
+    return $false
 }
 
 function Install-AWSCLI {
@@ -601,6 +631,52 @@ else {
     Write-SetupLog "Skipping scheduled task setup (--SkipScheduledTasks flag)" "WARNING"
 }
 
+# Step 6: Metabase Dashboard (Optional)
+if (-not $SkipMetabase) {
+    Write-SectionHeader "Step 6: Metabase Dashboard (Optional)"
+    
+    Write-Host "Metabase is a free, open-source dashboard tool that makes it easy" -ForegroundColor White
+    Write-Host "to visualize your SEO audit data with beautiful charts and graphs." -ForegroundColor White
+    Write-Host ""
+    Write-Host "Would you like to set up Metabase now?" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $setupMetabase = Read-Host "Set up Metabase dashboard? (Y/N)"
+    
+    if ($setupMetabase -eq "Y" -or $setupMetabase -eq "y") {
+        # Check for Docker
+        if (Install-Docker) {
+            Write-Host ""
+            Write-SetupLog "Starting Metabase setup..."
+            
+            $metabaseScript = Join-Path $script:ProjectRoot "metabase\setup_metabase.ps1"
+            if (Test-Path $metabaseScript) {
+                & $metabaseScript
+            }
+            else {
+                Write-SetupLog "Metabase setup script not found" "ERROR"
+            }
+        }
+        else {
+            Write-SetupLog "Docker is required for Metabase. Skipping Metabase setup." "WARNING"
+            Write-Host ""
+            Write-Host "You can set up Metabase later by running:" -ForegroundColor Yellow
+            Write-Host "  .\metabase\setup_metabase.ps1" -ForegroundColor Gray
+            Write-Host ""
+        }
+    }
+    else {
+        Write-SetupLog "Skipping Metabase setup" "WARNING"
+        Write-Host ""
+        Write-Host "You can set up Metabase later by running:" -ForegroundColor Yellow
+        Write-Host "  .\metabase\setup_metabase.ps1" -ForegroundColor Gray
+        Write-Host ""
+    }
+}
+else {
+    Write-SetupLog "Skipping Metabase setup (--SkipMetabase flag)" "WARNING"
+}
+
 # ============================================
 # Setup Complete
 # ============================================
@@ -625,7 +701,10 @@ Write-Host ""
 Write-Host "4. View the logs:" -ForegroundColor White
 Write-Host "   $($config.log_file_path)" -ForegroundColor Gray
 Write-Host ""
-Write-Host "5. Connect Power BI or your preferred BI tool to PostgreSQL" -ForegroundColor White
+Write-Host "5. Set up Metabase dashboard (if not done already):" -ForegroundColor White
+Write-Host "   .\metabase\setup_metabase.ps1" -ForegroundColor Gray
+Write-Host ""
+Write-Host "6. Or connect Power BI or your preferred BI tool to PostgreSQL" -ForegroundColor White
 Write-Host ""
 
 Write-SetupLog "=== Setup Completed ===" "HEADER"
