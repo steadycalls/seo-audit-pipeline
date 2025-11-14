@@ -1,6 +1,6 @@
 # Automated SEO Audit Pipeline
 
-This project provides a complete, automated pipeline for conducting technical SEO audits across multiple websites. It uses Screaming Frog SEO Spider for crawling, PostgreSQL for data storage, and a set of PowerShell and Python scripts for orchestration, ETL, and backups.
+This project provides a complete, automated pipeline for conducting technical SEO audits across multiple websites. It uses Screaming Frog SEO Spider for crawling, PostgreSQL for data storage, and a suite of PowerShell and Python scripts for orchestration, ETL, and backups. The entire setup process is automated with a master PowerShell script.
 
 ![Architecture Diagram](docs/architecture.png)
 
@@ -15,90 +15,56 @@ This system is designed to be robust, scalable, and easy to manage, allowing you
 - **Automated Backups**: Daily backups of the database and raw data to AWS S3.
 - **Performance Optimized**: Parallel processing for crawls and indexed database schema for fast queries.
 - **Comprehensive Logging**: Detailed logging for all processes to easily diagnose issues.
-- **Easy Setup**: Includes scripts to help with credential and scheduled task setup.
+- **Easy Setup**: A master setup script automates prerequisite installation, configuration, and task scheduling.
 
 ## Project Structure
 
 ```
 /seo-audit-pipeline
 |-- config/                    # Configuration files
-|   |-- config.json            # Main configuration
-|   |-- domains.csv            # List of domains to crawl
-|   `-- .env.template          # Template for environment variables
-|-- db_backups/                # Local storage for database backups
 |-- docs/                      # Documentation files
-|   |-- ARCHITECTURE.md
-|   |-- DATABASE.md
-|   `-- TROUBLESHOOTING.md
-|-- exports/                   # Raw CSV exports from Screaming Frog
-|-- exports_archive/           # Archived CSVs after processing
-|-- logs/                      # Log files for all scripts
-|-- scripts/                   # All automation scripts
-|   |-- run_crawler.ps1        # PowerShell script for batch crawling
-|   |-- run_etl.py             # Python script for ETL process
-|   |-- run_backup.ps1         # PowerShell script for backups
-|   |-- setup_credentials.ps1  # Helper for setting up credentials
-|   `-- setup_scheduled_tasks.ps1 # Helper for creating Windows tasks
-|-- sql/                       # SQL scripts for database setup
-|   |-- 01_create_schema.sql   # Main database schema
-|   |-- 02_setup_user.sql      # Script to create a database user
-|   `-- 03_sample_queries.sql  # Example queries for analysis
+|-- scripts/                   # Automation and setup helper scripts
+|-- sql/                       # Database schema and query scripts
 |-- .gitignore
 |-- README.md
-`-- requirements.txt           # Python dependencies
+|-- requirements.txt           # Python dependencies
+`-- setup.ps1                  # MASTER SETUP SCRIPT
 ```
 
 ## Getting Started
 
+This project includes a master setup script that automates the entire installation and configuration process.
+
 ### Prerequisites
 
 - **Windows Machine**: The scripts are designed for a Windows environment with PowerShell 5.1+.
-- **Screaming Frog SEO Spider**: A licensed version is required to use the command-line interface.
-- **PostgreSQL**: Version 12 or higher.
-- **Python**: Version 3.8 or higher.
-- **AWS CLI**: For backing up data to S3.
+- **Screaming Frog SEO Spider**: A licensed version is required for command-line use. The setup script will prompt you for the installation path.
 
-### Installation and Setup
+### Automated Installation
 
 1.  **Clone the Repository**
 
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/steadycalls/seo-audit-pipeline.git
     cd seo-audit-pipeline
     ```
 
-2.  **Configure the Pipeline**
+2.  **Run the Master Setup Script**
 
-    -   Rename `config/config.json.template` to `config.json` and update the paths and settings to match your environment.
-    -   Edit `config/domains.csv` to add the websites you want to crawl.
-
-3.  **Set up the Database**
-
-    -   Create a PostgreSQL database (e.g., `seo_audits`).
-    -   Run the `sql/01_create_schema.sql` script to create the tables and indexes.
-    -   (Optional) Run `sql/02_setup_user.sql` to create a dedicated user for the ETL process.
-
-4.  **Install Python Dependencies**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-5.  **Set up Credentials**
-
-    Run the `setup_credentials.ps1` script in PowerShell to securely configure your database and AWS credentials.
+    Open PowerShell **as an Administrator**, navigate to the project directory, and run the `setup.ps1` script.
 
     ```powershell
-    ./scripts/setup_credentials.ps1
+    ./setup.ps1
     ```
 
-6.  **Schedule the Automated Tasks**
+    The script will guide you through the following steps:
+    -   **Prerequisite Check**: It will check for and offer to install Python, PostgreSQL, and the AWS CLI using Chocolatey.
+    -   **Configuration**: It will ask you for all necessary settings, such as file paths, database details, and S3 bucket names.
+    -   **Database Setup**: It will create the database and all the necessary tables.
+    -   **Credential Setup**: It will help you securely store your database and AWS credentials.
+    -   **Task Scheduling**: It will automatically create the daily scheduled tasks in Windows Task Scheduler.
 
-    Run the `setup_scheduled_tasks.ps1` script as an Administrator in PowerShell to create the daily tasks for crawling, ETL, and backups.
-
-    ```powershell
-    ./scripts/setup_scheduled_tasks.ps1
-    ```
+That's it! The pipeline is now fully configured and ready to run.
 
 ## Usage
 
