@@ -37,12 +37,14 @@ catch {
 
 # Define script paths
 $scriptDir = Split-Path -Parent $PSScriptRoot
+$healthCheckScript = Join-Path $scriptDir "scripts\check_system_health.ps1"
 $crawlerScript = Join-Path $scriptDir "scripts\run_crawler.ps1"
 $etlScript = Join-Path $scriptDir "scripts\run_etl.py"
 $backupScript = Join-Path $scriptDir "scripts\run_backup.ps1"
 
 # Verify scripts exist
 $scripts = @{
+    "Health Check" = $healthCheckScript
     "Crawler" = $crawlerScript
     "ETL" = $etlScript
     "Backup" = $backupScript
@@ -58,6 +60,7 @@ foreach ($script in $scripts.GetEnumerator()) {
 
 # Task names
 $taskBaseName = "SEO_Audit_Pipeline"
+$healthCheckTaskName = "$taskBaseName`_0_HealthCheck"
 $crawlerTaskName = "$taskBaseName`_1_Crawler"
 $etlTaskName = "$taskBaseName`_2_ETL"
 $backupTaskName = "$taskBaseName`_3_Backup"
@@ -65,7 +68,7 @@ $backupTaskName = "$taskBaseName`_3_Backup"
 # Remove existing tasks if they exist
 Write-Host ""
 Write-Host "Removing existing tasks (if any)..." -ForegroundColor Yellow
-@($crawlerTaskName, $etlTaskName, $backupTaskName) | ForEach-Object {
+@($healthCheckTaskName, $crawlerTaskName, $etlTaskName, $backupTaskName) | ForEach-Object {
     try {
         Unregister-ScheduledTask -TaskName $_ -Confirm:$false -ErrorAction SilentlyContinue
         Write-Host "  Removed: $_" -ForegroundColor Gray
@@ -85,6 +88,32 @@ Write-Host "  User: $currentUser" -ForegroundColor Gray
 Write-Host ""
 
 # ============================================
+# Task 0: Health Check (runs at system startup)
+# ============================================
+
+$healthCheckAction = New-ScheduledTaskAction `
+    -Execute "PowerShell.exe" `
+    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$healthCheckScript`""
+
+$healthCheckTrigger = New-ScheduledTaskTrigger -AtStartup
+
+$healthCheckSettings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable `
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 10)
+
+Register-ScheduledTask `
+    -TaskName $healthCheckTaskName `
+    -Action $healthCheckAction `
+    -Trigger $healthCheckTrigger `
+    -Settings $healthCheckSettings `
+    -User $currentUser `
+    -Description "SEO Audit Pipeline - Step 0: System health check on startup" | Out-Null
+
+Write-Host "✓ Created task: $healthCheckTaskName" -ForegroundColor Green
+
+# ============================================
 # Task 1: Crawler
 # ============================================
 
@@ -98,7 +127,10 @@ $crawlerSettings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
     -StartWhenAvailable `
-    -RunOnlyIfNetworkAvailable
+    -RunOnlyIfNetworkAvailable `
+    -RestartCount 3 `
+    -RestartInterval (New-TimeSpan -Minutes 10) `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 4)
 
 Register-ScheduledTask `
     -TaskName $crawlerTaskName `
@@ -135,7 +167,10 @@ $etlTrigger.Delay = "PT5M"  # Wait 5 minutes after crawler
 $etlSettings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable
+    -StartWhenAvailable `
+    -RestartCount 3 `
+    -RestartInterval (New-TimeSpan -Minutes 5) `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 2)
 
 Register-ScheduledTask `
     -TaskName $etlTaskName `
@@ -161,7 +196,10 @@ $backupTrigger.Delay = "PT10M"  # Wait 10 minutes after crawler (5 min after ETL
 $backupSettings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable
+    -StartWhenAvailable `
+    -RestartCount 3 `
+    -RestartInterval (New-TimeSpan -Minutes 5) `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
 Register-ScheduledTask `
     -TaskName $backupTaskName `
@@ -183,11 +221,13 @@ Write-Host "Task Scheduler Setup Complete!" -ForegroundColor Green
 Write-Host "============================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Created tasks:" -ForegroundColor Cyan
-Write-Host "  1. $crawlerTaskName" -ForegroundColor White
-Write-Host "  2. $etlTaskName" -ForegroundColor White
-Write-Host "  3. $backupTaskName" -ForegroundColor White
+Write-Host "  0. $healthCheckTaskName (runs at system startup)" -ForegroundColor White
+Write-Host "  1. $crawlerTaskName (runs daily at $ScheduleTime)" -ForegroundColor White
+Write-Host "  2. $etlTaskName (runs after crawler)" -ForegroundColor White
+Write-Host "  3. $backupTaskName (runs after ETL)" -ForegroundColor White
 Write-Host ""
-Write-Host "Schedule: Daily at $ScheduleTime" -ForegroundColor Cyan
+Write-Host "Main Schedule: Daily at $ScheduleTime" -ForegroundColor Cyan
+Write-Host "Health Check: Runs automatically at system startup" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "To view tasks, run:" -ForegroundColor Yellow
 Write-Host "  Get-ScheduledTask | Where-Object {`$_.TaskName -like 'SEO_Audit_Pipeline*'}" -ForegroundColor Gray

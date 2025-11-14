@@ -63,3 +63,20 @@ This guide provides solutions to common problems you might encounter while using
 -   **Run Manually**: Always try running a failing script manually from a PowerShell or command prompt. The output is often more detailed than what is available in the Task Scheduler logs.
 -   **Check the Logs**: This cannot be overstated. The `logs/pipeline.log` file and the `etl_logs` database table were designed to be the first place you look to diagnose any problem.
 -   **Permissions**: Many issues are related to file or user permissions. Ensure the user account running the scheduled tasks has permission to read/write to all the directories defined in `config.json` and to execute the necessary command-line tools.
+
+
+## System Health and Startup Issues
+
+### Problem: Tasks don't run after a computer reboot.
+
+-   **Check Health Check Log**: A new health check script runs automatically on system startup. Check the log file at `C:\sf_batch\logs\health_check.log` for any errors. This log will tell you if essential services like PostgreSQL failed to start.
+-   **PostgreSQL Service**: Ensure the PostgreSQL service is set to "Automatic" startup type. The health check script will attempt to start it, but it's best if it starts automatically with Windows.
+    1.  Open `services.msc`.
+    2.  Find the `postgresql-x64-14` (or similar) service.
+    3.  Right-click, go to `Properties`, and set "Startup type" to `Automatic`.
+-   **Task Settings**: The scheduled tasks are configured to run if they were missed. You can verify this by opening Task Scheduler, going to the task's `Settings` tab, and ensuring "Run task as soon as possible after a scheduled start is missed" is checked.
+
+### Problem: A task failed and didn't run again.
+
+-   **Check Restart Settings**: The tasks are configured to restart up to 3 times on failure. You can check this in the task's `Settings` tab. The restart interval is set to 10 minutes for the crawler and 5 minutes for the other tasks.
+-   **Execution Time Limit**: Each task has an execution time limit to prevent it from running indefinitely. If a task is terminated because it exceeded this limit, it will be logged in the Task Scheduler history.

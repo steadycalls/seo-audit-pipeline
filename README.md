@@ -16,6 +16,7 @@ This system is designed to be robust, scalable, and easy to manage, allowing you
 - **Performance Optimized**: Parallel processing for crawls and indexed database schema for fast queries.
 - **Comprehensive Logging**: Detailed logging for all processes to easily diagnose issues.
 - **Easy Setup**: A master setup script automates prerequisite installation, configuration, and task scheduling.
+- **Reboot Resilient**: Automatically checks system health on startup and restarts failed tasks.
 
 ## Project Structure
 
@@ -65,6 +66,14 @@ This project includes a master setup script that automates the entire installati
     -   **Task Scheduling**: It will automatically create the daily scheduled tasks in Windows Task Scheduler.
 
 That's it! The pipeline is now fully configured and ready to run.
+
+### Reboot and Failure Resilience
+
+The system is designed to be resilient:
+
+- **PostgreSQL Auto-Start**: The health check script verifies that the PostgreSQL service is running on system startup and attempts to start it if it's not.
+- **Task Auto-Restart**: If a scheduled task fails, it will automatically attempt to restart up to 3 times.
+- **Missed Task Execution**: If the computer is off during the scheduled run time, the tasks will run as soon as the computer is turned on again.
 
 ## Usage
 
